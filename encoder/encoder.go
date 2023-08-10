@@ -60,6 +60,7 @@ import "C"
 import (
 	"errors"
 	"image"
+	"image/draw"
 	"io"
 	"unsafe"
 )
@@ -69,6 +70,14 @@ type Encoder struct {
 	options *Options
 	config  *C.WebPConfig
 	img     *image.RGBA
+}
+
+func grayscaleToRGBA(grayImg image.Image) *image.RGBA {
+	bounds := grayImg.Bounds()
+	rgbaImg := image.NewRGBA(bounds)
+	draw.Draw(rgbaImg, rgbaImg.Bounds(), grayImg, bounds.Min, draw.Src)
+
+	return rgbaImg
 }
 
 // NewEncoder return new encoder instance
@@ -87,6 +96,8 @@ func NewEncoder(src image.Image, options *Options) (e *Encoder, err error) {
 	switch v := src.(type) {
 	case *image.RGBA:
 		e.img = v
+	case *image.Gray:
+		e.img = grayscaleToRGBA(src)
 	default:
 		return nil, errors.New("unsupported image type")
 	}
